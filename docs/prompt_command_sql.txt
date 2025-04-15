@@ -1,0 +1,28 @@
+CREATE TABLE admin.ai_commands (
+  `command_id` int unsigned NOT NULL auto_increment ,
+  `summary` text ,
+  `section` varchar(128) COMMENT 'booking, label etc.',
+  `application_context` varchar(128) ,
+  `security_level` enum('admin','all') ,
+  `description` text ,
+  `identifier_of_api_point` mediumtext ,
+  `args` json ,
+  `route` varchar(256) COMMENT 'Comma separated V2 route names.',
+  `metadata` json ,
+  `created` timestamp NOT NULL DEFAULT 'CURRENT_TIMESTAMP' DEFAULT_GENERATED ,
+  `metadara` json ,
+  `active` tinyint(1) ,
+  `SQL` text ,
+  PRIMARY KEY (`command_id`)
+);
+CREATE TABLE admin.ai_prompts (
+  `prompt_id` int unsigned NOT NULL auto_increment ,
+  `description` varchar(512) ,
+  `purpose` text ,
+  `section` varchar(32) COMMENT 'booking, label etc.',
+  `prompt` text ,
+  `metadata` json ,
+  `created` timestamp NOT NULL DEFAULT 'CURRENT_TIMESTAMP' DEFAULT_GENERATED ,
+  `identifier` varchar(100) ,
+  PRIMARY KEY (`prompt_id`)
+);

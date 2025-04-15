@@ -1,0 +1,111 @@
+"command_id","summary","section","application_context","security_level","description","identifier_of_api_point","args","route","metadata","created","metadara","active","SQL"
+526,General Artist Fee Questions ,"",,,"This command can filter artist fees by status, country, date, or invoice item type. It supports queries about invoice payment statuses (Cancelled, Bad Debt, Partially paid, Fully paid, Open etc.). It can retrieve fees joining multiple tables filtering based on the artist, invoice and booking data.
+
+Some Example Questions:
+
+""What are C-3PO's United States Fees ?""
+""What is the maximum fee for R2-D2 in Canada ?""
+""Has C-3PO's United States Fees been paid ?""
+“Which artists have cancelled fees in the United States for 2023?”
+“Show me all partially paid fees for the artist R2-D2 in Canada.”
+“Which fees for Obi-Wan Kenobi are still open this quarter?”
+“Has BB-8’s booking fee in Germany been marked as bad debt?”
+“What are the fully paid fees for The Mandalorian in 2024?”
+""Show all invoices from 2024 with info amount and date""
+""Show all due invoices from 2024""
+""What are the top highest paid fees?""",/sql.pl,"{""command"": {""type"": ""string"", ""required"": true, ""description"": ""Consolidate the user messages into a single, coherent intent and pass it here.""}, ""prompt_id"": {""type"": ""string"", ""default"": ""7"", ""required"": true, ""description"": ""This value will always be 7. Always include it in the args.""}}","","{""renderer"": ""dynjson""}","2025-01-10 11:41:01","",1,
+527,Ask anything about your bookings!,"booking, accounting, contacts, general",,,"This command handles all booking-related operations for talent booking agencies.
+
+    Event Management: Querying event details, contracts, and checklists.
+    Travel Arrangements: Managing pre- and post-event travel schedules using the travels table, including after_gig_flag indicators.
+    Artist Management: Tracking artist bookings, performances, and availability.
+    Local Details: Managing hotels, restaurants, pickup contacts, and other local arrangements.
+    Document Tracking: Managing documents, signatures, and user-created records.
+    Contact Relationships: Mapping contacts to events, travels, and other entities.
+    Reporting: Generating insights on confirmed events, travel details, contracts, and questionnaires.
+
+The prompt assumes defaults for unspecified details (e.g., most recent occurrence, common reporting practices) and ensures performance-efficient queries by leveraging table relationships and avoiding unnecessary columns.
+
+EXAMPLE QUESTIONS:
+
+Event Management:
+Does <calendar date> have contracts sent to the promoter, and when were they sent?
+Which events have all travel details confirmed, and when was this marked as done?
+Which events have questionnaires sent out or received, and when were these actions completed?
+List all events where X Artist performed in 2024.
+
+Travel Arrangements:
+When is my next flight scheduled?
+Show all travel arrangements, including contact names and event details.
+Which events still have pending travel arrangements?
+
+Artist Management:
+When did X Artist perform in Los Angeles?
+List all artists who performed at events with over 10,000 attendees.
+What were the fees for <artist_name> in <city,country,venue>
+
+Local Details:
+At which hotel am I staying in Berlin this weekend?
+Which events are missing local details, such as pickup contacts or restaurant bookings?
+Who are the pickup contacts for events where X Artist is performing?
+Show all local contacts responsible for artist transportation.
+Which events have confirmed hotel bookings but missing restaurant arrangements?
+
+Document Tracking:
+List all signed documents for events where contracts were agreed upon.
+Show all documents created by John Doe in the last six months.
+Which events are missing signed contracts?
+
+Contact Relationships:
+Who are the contacts associated with events in Berlin last year?
+List all main promoters for events in 2024.
+Which contacts are handling travel arrangements for X Artist?
+Who has not yet responded to the questionnaire for upcoming events?
+
+Reporting and Insights:
+How many events are scheduled per month in 2024?
+How much in booking fees did we make from Artist X in a time period?
+How much in booking fees did we make from Promoter Y in a time period?
+Which events have the highest ticket prices?
+How many confirmed bookings does each artist have in 2024?
+Which events have invoice due dates within the next seven days?
+
+Advanced Queries:
+Are there any events with overlapping travel schedules for artists?
+Are there any events where the same artist is scheduled in two locations on the same day?
+",/sql.pl,"{""command"": {""type"": ""string"", ""required"": true, ""description"": ""Consolidate the user messages into a single, coherent intent and pass it here.""}, ""prompt_id"": {""type"": ""string"", ""default"": ""9"", ""required"": true, ""description"": ""This value will always be 9. Always include it in the args.""}}","","{""renderer"": ""dynjson""}","2025-01-10 11:41:01","",1,
+528,General Sales Questions ,"distribution, general",,,"This prompt handles All product sales, sales account, distribution accounts Specific commands. It will generate SQL queries for sales-related operations.
+It manages orders and more.
+
+Example Questions:
+""how many orders came in on january, 31st?""
+""can you give me all names of the orders that came in on january, 31st?""
+""how many of these orders did i invoice on january,31st?""
+""can you list me all records of these orders in total?""
+""can you list me all the items ordered in <time range>""
+how many sales accounts do i have in total?
+",/sql.pl,"{""command"": {""type"": ""string"", ""required"": true, ""description"": ""Consolidate the user messages into a single, coherent intent and pass it here.""}, ""prompt_id"": {""type"": ""string"", ""default"": ""11"", ""required"": true, ""description"": ""This value will always be 11. Always include it in the args.""}}","","{""renderer"": ""dynjson""}","2025-01-10 11:41:01","",1,
+529,General Repertoire / Catalog Questions,catalog,,,"This prompt handles All product sales, sales account, distribution accounts Specific commands. It will generate SQL queries for sales-related operations.
+It manages orders and more.
+
+Example Questions:
+""how many orders came in on january, 31st?""
+""can you give me all names of the orders that came in on january, 31st?""
+""how many of these orders did i invoice on january,31st?""
+""can you list me all records of these orders in total?""
+""can you list me all the items ordered in <time range>""
+how many sales accounts do i have in total?
+",/sql.pl,"{""command"": {""type"": ""string"", ""required"": true, ""description"": ""Consolidate the user messages into a single, coherent intent and pass it here.""}, ""prompt_id"": {""type"": ""string"", ""default"": ""15"", ""required"": true, ""description"": ""This value will always be 15. Always include it in the args.""}}","","{""renderer"": ""dynjson""}","0000-00-00 00:00:00","",1,
+530,Ask anything about your invoices!,"accounting, contacts, general",,,"This command handles all invoice-related operations for 
+
+    Reporting: Generating insights on paid, unpaid, etc. invoices.
+
+The prompt assumes defaults for unspecified details (e.g., most recent occurrence, common reporting practices) and ensures performance-efficient queries by leveraging table relationships and avoiding unnecessary columns.
+
+EXAMPLE QUESTIONS:
+
+Reporting and Insights:
+How many invoices are created per month in 2024?
+How much in invoices did we make in a time period?
+Which invoices have due dates within the next seven days?
+",/sql.pl,"{""command"": {""type"": ""string"", ""required"": true, ""description"": ""Consolidate the user messages into a single, coherent intent and pass it here.""}, ""prompt_id"": {""type"": ""string"", ""default"": ""17"", ""required"": true, ""description"": ""This value will always be 17. Always include it in the args.""}}","","{""renderer"": ""dynjson""}","2025-01-10 11:41:01","",1,
