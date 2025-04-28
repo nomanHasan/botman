@@ -33,7 +33,7 @@ const Header = () => {
         <h1 style={{ fontSize: '1.5rem', margin: 0, color: '#222222' }}>Bot Manager</h1>
       </div>
       <nav>
-        {/* <Link 
+        <Link 
           to="/dashboard" 
           style={{ 
             ...navLinkStyle,
@@ -41,7 +41,16 @@ const Header = () => {
           }}
         >
           Dashboard
-        </Link> */}
+        </Link>
+        <Link 
+          to="/tables" 
+          style={{ 
+            ...navLinkStyle,
+            ...(isActive('/') || isActive('/tables') ? activeStyle : {})
+          }}
+        >
+          Tables
+        </Link>
         {/* <Link 
           to="/commands" 
           style={{ 

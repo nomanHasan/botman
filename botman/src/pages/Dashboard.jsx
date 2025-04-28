@@ -2,18 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import useBotStore from '../store/useBotStore';
 import { botApi } from '../services';
+import { formatDistanceToNow } from 'date-fns';
 
 /* eslint-disable */
-/* biome-ignore lint/a11y/useButtonType: This rule is globally disabled for this file */
+
+// Helper to format relative time using date-fns
+const getRelativeTime = (timestamp) => {
+  if (!timestamp) return '';
+  return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+};
 
 const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
+
   const formatVectorStoreUpdate = (bot) => {
     if (!bot.metadata?.vector_store_id) return 'Not created';
     const timestamp = bot.metadata?.vector_store_updated || Date.now();
     const date = new Date(timestamp);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    const relative = getRelativeTime(timestamp);
+    return `${relative} (${date.toLocaleDateString()} ${date.toLocaleTimeString()})`;
   };
-  const { allTables, fetchTables, isLoading } = useBotStore();
+
+  const { tables: allTables, fetchTables, isLoading } = useBotStore(); // Renamed 'tables' to 'allTables' locally for minimal changes below
   const [formData, setFormData] = useState({
     id: '',
     description: '',
@@ -121,9 +130,10 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Bot ID:</label>
+            <label htmlFor="botIdInput" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Bot ID:</label>
             <input
               type="text"
+              id="botIdInput"
               value={formData.id}
               disabled
               style={{
@@ -137,9 +147,10 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description:</label>
+            <label htmlFor="descriptionInput" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description:</label>
             <textarea
               name="description"
+              id="descriptionInput"
               value={formData.description}
               onChange={handleChange}
               rows={4}
@@ -154,9 +165,10 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Prompt:</label>
+            <label htmlFor="promptInput" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Prompt:</label>
             <textarea
               name="prompt"
+              id="promptInput"
               value={formData.prompt}
               onChange={handleChange}
               rows={10}
@@ -173,9 +185,10 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Tables:</label>
+            <label htmlFor="tableSearchInput" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Tables:</label>
             <input
               type="text"
+              id="tableSearchInput"
               placeholder="Search tables..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -229,8 +242,8 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Associated Commands:</label>
-            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+            <label id="associatedCommandsLabel" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Associated Commands:</label>
+            <ul aria-describedby="associatedCommandsLabel" style={{ margin: 0, paddingLeft: '20px' }}>
               {bot.associated_commands && bot.associated_commands.length > 0 ? (
                 bot.associated_commands.map((cmd) => (
                   <li key={cmd.command_id}>
@@ -244,16 +257,16 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Vector Store:</label>
+            <label id="vectorStoreLabel" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Vector Store:</label>
             {bot.metadata?.vector_store_id ? (
-              <div>
+              <div aria-describedby="vectorStoreLabel">
                 <p style={{ margin: 0 }}>{bot.metadata.vector_store_id}</p>
                 <p style={{ fontSize: '14px', color: '#666', margin: '5px 0 0 0' }}>
                   Last updated: {formatVectorStoreUpdate(bot)}
                 </p>
               </div>
             ) : (
-              <p style={{ margin: 0 }}>No vector store created yet</p>
+              <p aria-describedby="vectorStoreLabel" style={{ margin: 0 }}>No vector store created yet</p>
             )}
           </div>
 
@@ -464,7 +477,7 @@ const Dashboard = () => {
       const result = await botApi.createVectorStore(botId);
 
       // Update the store with the result from API
-      if (result.details && result.details.finalVectorStoreId) {
+      if (result.details?.finalVectorStoreId) {
         updateBotWithVectorStore(botId, result.details.finalVectorStoreId);
       }
 
@@ -481,7 +494,7 @@ const Dashboard = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (window.confirm(`Are you sure you want to delete this bot?`)) {
+    if (window.confirm('Are you sure you want to delete this bot?')) {
       try {
         await deleteBot(botId);
       } catch (error) {
@@ -495,9 +508,8 @@ const Dashboard = () => {
     setSelectedBots(prev => {
       if (prev.includes(botId)) {
         return prev.filter(id => id !== botId);
-      } else {
-        return [...prev, botId];
       }
+      return [...prev, botId];
     });
   };
 
@@ -537,7 +549,7 @@ const Dashboard = () => {
   const truncateText = (text, maxLength = 50) => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return `${text.substring(0, maxLength)}...`;
   };
 
   // Helper to truncate tables list for display
@@ -554,7 +566,8 @@ const Dashboard = () => {
     // Extract timestamp from metadata if available
     const timestamp = bot.metadata?.vector_store_updated || Date.now();
     const date = new Date(timestamp);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    const relative = getRelativeTime(timestamp);
+    return `${relative} (${date.toLocaleDateString()} ${date.toLocaleTimeString()})`;
   };
 
   if (isLoading) {
@@ -606,7 +619,6 @@ const Dashboard = () => {
                     cursor: 'pointer',
                     backgroundColor: selectedBots.includes(bot.id) ? '#e3f2fd' : 'transparent'
                   }}
-                // onClick={() => handleUpdateBot(bot)}
                 >
                   <td style={{ padding: '12px', textAlign: 'center' }}>
                     <input
@@ -674,7 +686,6 @@ const Dashboard = () => {
                   <td style={{ padding: '12px' }}>
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button
-                        // onClick={(e) => handleUpdateBot(bot, e)}
                         type="button"
                         style={{
                           padding: '5px 10px',
@@ -701,19 +712,6 @@ const Dashboard = () => {
                       >
                         Chat
                       </button>
-                      {/* <button
-                        onClick={(e) => handleDeleteBot(bot.id, e)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#f44336',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Delete
-                      </button> */}
                     </div>
                   </td>
                 </tr>

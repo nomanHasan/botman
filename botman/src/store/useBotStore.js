@@ -6,9 +6,15 @@ const useBotStore = create((set, get) => ({
   commands: [],
   prompts: [],
   vectorStores: [],
-  allTables: [],
+  tables: [],
+  tableDetailsCache: {}, // Cache for storing details of fetched tables { tableName: { description: '...', columns: [...] } }
+  allTablesAndColumns: {}, // New state to store all tables and columns { tableName: [col1, col2], ... }
   isLoading: false,
+  isLoadingTableDetails: false, // Separate loading state for table details
+  isLoadingAllTablesAndColumns: false,
   error: null,
+  errorTableDetails: null, // Separate error state for table details
+  errorAllTablesAndColumns: null,
   selectedBot: null,
   selectedCommand: null,
   selectedPrompt: null,
@@ -64,10 +70,85 @@ const useBotStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const tables = await botApi.getAllTables();
-      set({ allTables: tables, isLoading: false });
+      set({ tables, isLoading: false });
     } catch (error) {
       console.error('Error fetching tables:', error);
       set({ error: error.message || 'Failed to fetch tables', isLoading: false });
+    }
+  },
+
+  /**
+   * Fetches details for a specific table and caches the result.
+   * @param {string} tableName The name of the table to fetch details for.
+   */
+  fetchTableDetails: async (tableName) => {
+    // Check cache first
+    if (get().tableDetailsCache[tableName]) {
+      return; // Already fetched
+    }
+
+    set({ isLoadingTableDetails: true, errorTableDetails: null });
+    try {
+      const details = await botApi.getTableDetails(tableName);
+      set(state => ({
+        tableDetailsCache: {
+          ...state.tableDetailsCache,
+          [tableName]: details // Store details under the table name key
+        },
+        isLoadingTableDetails: false
+      }));
+    } catch (error) {
+      console.error(`Error fetching details for table ${tableName}:`, error);
+      set({ 
+        errorTableDetails: error.message || `Failed to fetch details for ${tableName}`, 
+        isLoadingTableDetails: false 
+      });
+    }
+  },
+
+  /**
+   * Fetches all tables and their columns.
+   */
+  fetchAllTablesAndColumns: async () => {
+    // Check if already fetched
+    if (Object.keys(get().allTablesAndColumns).length > 0) {
+      return;
+    }
+
+    set({ isLoadingAllTablesAndColumns: true, errorAllTablesAndColumns: null });
+    try {
+      const tablesAndColumns = await botApi.getAllTablesAndColumns();
+      set({
+        allTablesAndColumns: tablesAndColumns,
+        isLoadingAllTablesAndColumns: false
+      });
+    } catch (error) {
+      console.error('Error fetching all tables and columns:', error);
+      set({
+        errorAllTablesAndColumns: error.message || 'Failed to fetch tables and columns',
+        isLoadingAllTablesAndColumns: false
+      });
+    }
+  },
+  
+  updateTablesData: async (tablesData) => { // Renamed function, parameter name changed for clarity
+    set({ isLoading: true, error: null });
+    try {
+      const result = await botApi.updateMultipleTables(tablesData); // Call the new API function
+      
+      // Refresh tables data and details after update
+      // Clear cache as descriptions/comments might have changed
+      set({ tableDetailsCache: {} }); 
+      await get().fetchTables(); 
+      // Optionally re-fetch details for affected tables if needed immediately, 
+      // or let them be fetched on demand later.
+      
+      set({ isLoading: false });
+      return result;
+    } catch (error) {
+      console.error('Error updating tables data:', error); // Updated error message
+      set({ error: error.message || 'Failed to update tables data', isLoading: false }); // Updated error message
+      throw error;
     }
   },
   
@@ -175,10 +256,9 @@ const useBotStore = create((set, get) => ({
         },
         bots: state.bots.map(bot => {
           if (bot.metadata?.vector_store_id === vectorStoreId) {
-            const newMetadata = { ...bot.metadata };
-            delete newMetadata.vector_store_id;
-            delete newMetadata.vector_store_updated;
-            return { ...bot, metadata: newMetadata };
+            // Use destructuring and spread syntax to omit properties instead of delete
+            const { vector_store_id, vector_store_updated, ...restMetadata } = bot.metadata;
+            return { ...bot, metadata: restMetadata };
           }
           return bot;
         })

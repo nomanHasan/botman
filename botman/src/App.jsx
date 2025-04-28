@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Commands from './pages/Commands';
 import Prompts from './pages/Prompts';
 import VectorStores from './pages/VectorStores';
+import Tables from './pages/Tables';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Route path="/commands" element={<Commands />} />
           <Route path="/prompts" element={<Prompts />} />
           <Route path="/vector-stores" element={<VectorStores />} />
+          <Route path="/tables" element={<Tables />} />
           <Route path="/commands/:commandId" element={<Commands />} />
           <Route path="/prompts/:promptId" element={<Prompts />} />
         </Route>

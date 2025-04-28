@@ -118,6 +118,37 @@ const botApi = {
     const response = await httpClient.get(`${API_ENDPOINTS.BOTMANAGER}/tables`);
     return response.tables;
   },
+
+  /**
+   * Get details for a specific table
+   * @param {string} tableName - Name of the table (e.g., 'my_table' or 'admin.my_table')
+   * @returns {Promise<Object>} - Promise resolving to table details (description, columns)
+   */
+  getTableDetails: async (tableName) => {
+    // Encode the table name in case it contains special characters, although unlikely for table names
+    const encodedTableName = encodeURIComponent(tableName);
+    return httpClient.get(`${API_ENDPOINTS.BOTMANAGER}/tables/${encodedTableName}`);
+  },
+
+  /**
+   * Update multiple tables with descriptions and column comments.
+   * @param {Array<Object>} tablesData - Array of table update objects.
+   * Each object should have { name: string, description?: string, columns?: [{ name: string, comment: string }] }
+   * @returns {Promise<Object>} - Promise resolving to the API response
+   */
+  updateMultipleTables: async (tablesData) => {
+    const response = await httpClient.put(`${API_ENDPOINTS.BOTMANAGER}/tables`, { tables: tablesData });
+    return response;
+  },
+
+  /**
+   * Get all tables and their columns
+   * @returns {Promise<Object>} - Promise resolving to an object with table names as keys and arrays of column names as values
+   */
+  getAllTablesAndColumns: async () => {
+    const response = await httpClient.get(`${API_ENDPOINTS.BOTMANAGER}/table-columns`);
+    return response.tables; // Assuming the API returns { tables: { tableName: [col1, col2], ... } }
+  },
   
   /**
    * Get all vector stores
@@ -143,6 +174,17 @@ const botApi = {
    */
   deleteVectorStore: async (vectorStoreId) => {
     return httpClient.delete(`${API_ENDPOINTS.BOTMANAGER}/vector-stores/${vectorStoreId}`);
+  },
+
+  /**
+   * Find bots associated with specific table names.
+   * @param {string[]} tableNames - Array of table names.
+   * @returns {Promise<Array>} - Promise resolving to an array of bot objects.
+   */
+  findBotsByTableNames: async (tableNames) => {
+    const response = await httpClient.post(`${API_ENDPOINTS.BOTMANAGER}/find-bots-by-table-names`, { tables: tableNames });
+    // Assuming the API returns the array of bots directly or under a 'bots' key
+    return response.bots || response; 
   }
 };
 
