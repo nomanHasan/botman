@@ -24,6 +24,7 @@ const Tables = () => {
 
   const [expandedTable, setExpandedTable] = useState(null);
   const [modifiedColumns, setModifiedColumns] = useState({});
+  const [modifiedDescriptions, setModifiedDescriptions] = useState({});
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [updateError, setUpdateError] = useState(null);
   const [affectedBots, setAffectedBots] = useState([]);
@@ -128,6 +129,27 @@ const Tables = () => {
     return newState;
   }, [tableDetailsCache]);
 
+
+  const getModifiedDescriptionsState = useCallback((prev, tableName, newDescription) => {
+    const key = `${tableName}`;
+    const tableDetails = tableDetailsCache[tableName];
+    const originalDescription = tableDetails?.description || '';
+    const isModified = originalDescription !== newDescription;
+    const newState = { ...prev };
+    if (isModified) {
+      newState[key] = {
+        description: newDescription,
+        isModified: true,
+        table: tableName,
+      };
+    } else {
+      delete newState[key];
+    }
+    return newState;
+  }, [tableDetailsCache]);
+
+
+
   const handleColumnCommentChange = (tableName, column, value) => {
     setModifiedColumns(prev => {
       return getModifiedColumnsState(prev, tableName, column, { description: value });
@@ -136,6 +158,12 @@ const Tables = () => {
 
   const handleForeignKeyChange = (tableName, column, values) => {
     setModifiedColumns(prev => getModifiedColumnsState(prev, tableName, column, { foreignKeys: values }));
+  };
+
+  const handleDescriptionChange = (tableName, value) => {
+    setModifiedDescriptions(prev => {
+      return getModifiedDescriptionsState(prev, tableName, value);
+    });
   };
 
   const getAllForeignKeyOptions = (currentTableName) => {
@@ -153,7 +181,8 @@ const Tables = () => {
 
   const fetchAffectedBots = useCallback(async () => {
     const modifiedTableNames = [
-      ...new Set(Object.keys(modifiedColumns).map(key => key.split('.')[0]))
+      ...new Set(Object.keys(modifiedColumns).map(key => key.split('.')[0])),
+      ...new Set(Object.keys(modifiedDescriptions).map(key => key))
     ];
 
     if (modifiedTableNames.length === 0) {
@@ -175,7 +204,7 @@ const Tables = () => {
     } finally {
       setIsLoadingAffectedBots(false);
     }
-  }, [modifiedColumns]);
+  }, [modifiedColumns, modifiedDescriptions]);
 
   useEffect(() => {
     if (debounceTimeoutRef.current) {
@@ -192,7 +221,7 @@ const Tables = () => {
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [modifiedColumns, fetchAffectedBots]);
+  }, [modifiedColumns, modifiedDescriptions, fetchAffectedBots]);
 
   const handleUpdateSubmit = async () => {
     setIsSubmitting(true); // Start submission process
@@ -201,16 +230,15 @@ const Tables = () => {
     setErrorAffectedBots(null); // Clear previous bot update errors
 
     try {
+      // Build groupedUpdates from modifiedColumns
       const groupedUpdates = Object.values(modifiedColumns).reduce((acc, modCol) => {
         const { table, column, description, foreignKeys } = modCol;
-
         if (!acc[table]) {
           acc[table] = {
             name: table,
             columns: []
           };
         }
-
         acc[table].columns.push({
           name: column,
           comment: JSON.stringify({
@@ -218,9 +246,17 @@ const Tables = () => {
             foreignKeys: foreignKeys || []
           })
         });
-
         return acc;
       }, {});
+
+      for (const key in modifiedDescriptions) {
+        const descObj = modifiedDescriptions[key];
+        const table = descObj.table;
+        if (!groupedUpdates[table]) {
+          groupedUpdates[table] = { name: table, columns: [], description: '' };
+        }
+        groupedUpdates[table].description = descObj.description;
+      }
 
       const updatesForApi = Object.values(groupedUpdates);
 
@@ -228,7 +264,9 @@ const Tables = () => {
 
       const currentModifiedColumns = { ...modifiedColumns }; // Keep a copy for bot update logic
       const currentAffectedBots = [...affectedBots]; // Keep a copy
+
       setModifiedColumns({}); // Clear UI state immediately after table update success
+      setModifiedDescriptions({}); // Clear UI state immediately after table update success
 
       await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -271,7 +309,7 @@ const Tables = () => {
     </div>;
   }
 
-  const hasModifications = Object.keys(modifiedColumns).length > 0;
+  const hasModifications = Object.keys(modifiedColumns).length > 0 || Object.keys(modifiedDescriptions).length > 0;
 
   return (
     <div style={{ padding: '20px 20px 80px 20px' }}>
@@ -325,12 +363,12 @@ const Tables = () => {
 
                       {tableDetails && (
                         <>
-                          {tableDetails.description && (
-                            <div style={{ marginBottom: '15px' }}>
-                              <h4>Description</h4>
-                              <p>{tableDetails.description}</p>
-                            </div>
-                          )}
+                          <MemoTableDescription
+                            tableName={tableName}
+                            description={tableDetails.description}
+                            modifiedDescriptions={modifiedDescriptions}
+                            handleDescriptionChange={handleDescriptionChange}
+                          />
 
                           <div style={{ overflowX: 'auto' }}>
                             <table style={{
@@ -395,6 +433,25 @@ const Tables = () => {
         }}>
           <div>
             <p style={{ margin: 0 }}>
+              <strong>{Object.keys(modifiedDescriptions).length}</strong> Table Description{Object.keys(modifiedDescriptions).length !== 1 ? 's' : ''} modified
+            </p>
+            <ul style={{ margin: '5px 0 0 0', padding: 0, listStyle: 'none', fontSize: '14px' }}>
+              {Object.entries(modifiedDescriptions).slice(0, 3).map(([key]) => (
+                <li key={key}>{key}</li>
+              ))}
+              {Object.keys(modifiedDescriptions).length > 3 && (
+                <li title={
+                  Object.keys(modifiedDescriptions).slice(3).map(key => key).join(', \n')
+                }
+                  style={{
+                    color: 'blue',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                > ...and {Object.keys(modifiedDescriptions).length - 3} more </li>
+              )}
+            </ul>
+            <p style={{ margin: 0 }}>
               <strong>{Object.keys(modifiedColumns).length}</strong> column{Object.keys(modifiedColumns).length !== 1 ? 's' : ''} modified
             </p>
             <ul style={{ margin: '5px 0 0 0', padding: 0, listStyle: 'none', fontSize: '14px' }}>
@@ -405,12 +462,12 @@ const Tables = () => {
                 <li title={
                   Object.keys(modifiedColumns).slice(3).map(key => key).join(', \n')
                 }
-                style={{
-                  color: 'blue',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-                > ...and {Object.keys(modifiedColumns).length - 3} more ^ </li>
+                  style={{
+                    color: 'blue',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                > ...and {Object.keys(modifiedColumns).length - 3} more </li>
               )}
             </ul>
           </div>
@@ -449,7 +506,7 @@ const Tables = () => {
               disabled={isSubmitting || isLoadingTables || isLoadingTableDetails || isLoadingAffectedBots}
               style={{
                 padding: '8px 16px',
-                backgroundColor: isSubmitting ? '#cccccc' : '#4CAF50',
+                backgroundColor: isSubmitting || isLoadingTables || isLoadingTableDetails || isLoadingAffectedBots ? '#cccccc' : '#4CAF50',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
@@ -467,6 +524,44 @@ const Tables = () => {
 };
 
 export default Tables;
+
+
+const MemoTableDescription = React.memo(({ tableName, description, modifiedDescriptions, handleDescriptionChange }) => {
+
+  const [text, setText] = useState(description);
+  useEffect(() => {
+    if (modifiedDescriptions?.[tableName]?.description !== undefined) {
+      setText(modifiedDescriptions[tableName].description);
+    } else {
+      setText(description);
+    }
+  }, [modifiedDescriptions, tableName, description]);
+
+  const debouncedUpdate = useDebouncedCallback((value) => {
+    handleDescriptionChange(tableName, value);
+  }, 300, [tableName]);
+
+
+  return (
+    <textarea
+      type="text"
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        debouncedUpdate(e.target.value);
+      }}
+      style={{
+        width: '100%',
+        padding: '8px',
+        borderRadius: '4px',
+        border: '1px solid #ddd',
+        backgroundColor: modifiedDescriptions?.[tableName]?.isModified ? '#fff59d' : 'white',
+      }}
+      rows={2}
+      placeholder="Table description (optional)"
+    />);
+});
+
 
 const MemoTableRow = React.memo(TableRow);
 

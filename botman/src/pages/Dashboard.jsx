@@ -51,6 +51,20 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
     }
   }, [bot]);
 
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscKey);
+
+    return () => {
+      window.removeEventListener('keydown', handleEscKey);
+    };
+  }, [onClose]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -88,6 +102,8 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
       // Only update if something changed
       if (Object.keys(changes).length > 0) {
         await onUpdate(bot.id, changes);
+
+        // Also Update The Bot using updateMultipleVectorStores
       }
       onClose();
     } catch (error) {
@@ -204,17 +220,19 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
             {isLoading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>Loading tables...</div>
             ) : (
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '10px',
-                marginBottom: '20px',
-                maxHeight: '200px',
-                overflowY: 'auto',
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '4px'
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '10px',
+                  marginBottom: '20px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px'
+                }}
+              >
                 {filteredTables.length > 0 ? (
                   filteredTables.map((table) => (
                     <div key={table} style={{
@@ -224,7 +242,18 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
                       backgroundColor: formData.tables.includes(table) ? '#d1e6f9' : '#ffffff',
                       color: '#333333',
                       cursor: 'pointer'
-                    }} onClick={() => handleTableToggle(table)}>
+                    }} onClick={() => handleTableToggle(table)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          handleTableToggle(table);
+                        }
+                      }}
+                      onKeyUp={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          handleTableToggle(table);
+                        }
+                      }}
+                    >
                       {table}
                     </div>
                   ))
@@ -242,7 +271,7 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label id="associatedCommandsLabel" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Associated Commands:</label>
+            <span id="associatedCommandsLabel" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Associated Commands:</span>
             <ul aria-describedby="associatedCommandsLabel" style={{ margin: 0, paddingLeft: '20px' }}>
               {bot.associated_commands && bot.associated_commands.length > 0 ? (
                 bot.associated_commands.map((cmd) => (
@@ -257,7 +286,7 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
           </div>
 
           <div style={{ marginBottom: '15px' }}>
-            <label id="vectorStoreLabel" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Vector Store:</label>
+            <span style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Vector Store:</span>
             {bot.metadata?.vector_store_id ? (
               <div aria-describedby="vectorStoreLabel">
                 <p style={{ margin: 0 }}>{bot.metadata.vector_store_id}</p>
@@ -391,6 +420,7 @@ const ChatModal = ({ isOpen, onClose, bot, vectorStoreId }) => {
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <button
+            type='button'
             onClick={handleSendMessage}
             disabled={loading}
             style={{
@@ -401,10 +431,21 @@ const ChatModal = ({ isOpen, onClose, bot, vectorStoreId }) => {
               borderRadius: '4px',
               cursor: loading ? 'not-allowed' : 'pointer',
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !loading) {
+                handleSendMessage();
+              }
+            }}
+            onKeyUp={(e) => {
+              if (e.key === 'Enter' && !loading) {
+                handleSendMessage();
+              }
+            }}
           >
             {loading ? 'Sending...' : 'Send'}
           </button>
           <button
+            type='button'
             onClick={onClose}
             style={{
               padding: '10px 20px',
@@ -413,6 +454,16 @@ const ChatModal = ({ isOpen, onClose, bot, vectorStoreId }) => {
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onClose();
+              }
+            }}
+            onKeyUp={(e) => {
+              if (e.key === 'Enter') {
+                onClose();
+              }
             }}
           >
             Close
@@ -458,11 +509,21 @@ const Dashboard = () => {
 
   const handleBotUpdate = async (botId, data) => {
     try {
-      await updateBot(botId, data);
-      fetchBots(); // Refresh the list
-      return true;
+      const updateSuccess = await updateBot(botId, data);
+
+      if (updateSuccess && data.hasOwnProperty('tables')) {
+        try {
+          await updateMultipleVectorStores([botId]);
+        } catch (vectorUpdateError) {
+          console.error(`Error triggering vector store update for bot ${botId}:`, vectorUpdateError);
+        }
+      } else if (updateSuccess) {
+        fetchBots();
+      }
+
+      return updateSuccess;
     } catch (error) {
-      console.error('Error updating bot:', error);
+      console.error('Error in bot update process:', error);
       return false;
     }
   };
@@ -473,15 +534,12 @@ const Dashboard = () => {
     setLoading(prev => ({ ...prev, [botId]: true }));
 
     try {
-      // Call the API service
       const result = await botApi.createVectorStore(botId);
 
-      // Update the store with the result from API
       if (result.details?.finalVectorStoreId) {
         updateBotWithVectorStore(botId, result.details.finalVectorStoreId);
       }
 
-      // Refresh the bot list
       fetchBots();
     } catch (error) {
       console.error('Error creating vector store:', error);
@@ -504,7 +562,7 @@ const Dashboard = () => {
   };
 
   const toggleBotSelection = (botId, e) => {
-    e.stopPropagation(); // Prevent row click
+    e.stopPropagation();
     setSelectedBots(prev => {
       if (prev.includes(botId)) {
         return prev.filter(id => id !== botId);
@@ -530,8 +588,7 @@ const Dashboard = () => {
     setUpdatingVectorStores(true);
     try {
       await updateMultipleVectorStores(selectedBots);
-      // Bots will be refreshed from the store action
-      setSelectedBots([]); // Clear selection after update
+      setSelectedBots([]);
     } catch (error) {
       console.error('Error updating vector stores:', error);
     } finally {
@@ -545,25 +602,21 @@ const Dashboard = () => {
     setIsChatModalOpen(true);
   };
 
-  // Helper to truncate text for display
   const truncateText = (text, maxLength = 50) => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return `${text.substring(0, maxLength)}...`;
   };
 
-  // Helper to truncate tables list for display
   const truncateTables = (tables) => {
     if (!tables || tables.length === 0) return 'No tables';
     if (tables.length <= 3) return tables.join(', ');
     return `${tables.slice(0, 3).join(', ')}... +${tables.length - 3} more`;
   };
 
-  // Helper to format vector store update time
   const formatVectorStoreUpdate = (bot) => {
     if (!bot.metadata?.vector_store_id) return 'Not created';
 
-    // Extract timestamp from metadata if available
     const timestamp = bot.metadata?.vector_store_updated || Date.now();
     const date = new Date(timestamp);
     const relative = getRelativeTime(timestamp);
@@ -687,6 +740,17 @@ const Dashboard = () => {
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button
                         type="button"
+                        onClick={(e) => handleUpdateBot(bot, e)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            handleUpdateBot(bot, e);
+                          }
+                        }}
+                        onKeyUp={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            handleUpdateBot(bot, e);
+                          }
+                        }}
                         style={{
                           padding: '5px 10px',
                           backgroundColor: '#2196f3',
@@ -701,6 +765,16 @@ const Dashboard = () => {
                       <button
                         type="button"
                         onClick={(e) => handleChat(bot, e)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            handleChat(bot, e);
+                          }
+                        }}
+                        onKeyUp={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            handleChat(bot, e);
+                          }
+                        }}
                         style={{
                           padding: '5px 10px',
                           backgroundColor: 'hsl(83 25% 45% / 1)',
@@ -723,6 +797,7 @@ const Dashboard = () => {
 
       <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
         <button
+          type='button'
           onClick={updateSelectedBotsVectorStores}
           disabled={selectedBots.length === 0 || updatingVectorStores}
           style={{
