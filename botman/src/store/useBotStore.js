@@ -140,6 +140,7 @@ const useBotStore = create((set, get) => ({
       // Clear cache as descriptions/comments might have changed
       set({ tableDetailsCache: {} }); 
       await get().fetchTables(); 
+      await get().fetchAllTablesAndColumns(); // Fetch all tables and columns again
       // Optionally re-fetch details for affected tables if needed immediately, 
       // or let them be fetched on demand later.
       

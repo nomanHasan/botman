@@ -35,10 +35,10 @@ const Tables = () => {
 
   useEffect(() => {
     fetchTables();
-    setTimeout(() => {
-      fetchAllTablesAndColumns();
-    }
-      , 5000);
+    fetchAllTablesAndColumns();
+    // setTimeout(() => {
+    // }
+    //   , 5000);
   }, [fetchTables, fetchAllTablesAndColumns]);
 
   const toggleTable = (tableName) => {
@@ -53,15 +53,17 @@ const Tables = () => {
   };
 
   const parseColumnComment = (comment) => {
-    if (!comment) return { description: '', foreignKeys: [] };
+    if (!comment) return { description: '', foreignKeys: [], possibleValues: '' };
 
     try {
       const parsed = JSON.parse(comment);
       const description = typeof parsed.description === 'string' ? parsed.description : '';
       const foreignKeys = Array.isArray(parsed.foreignKeys) ? parsed.foreignKeys : [];
+      const possibleValues = typeof parsed.possibleValues === 'string' ? parsed.possibleValues : '';
       return {
         description,
-        foreignKeys
+        foreignKeys,
+        possibleValues
       };
     } catch (e) {
       return { error: true, original: comment };
@@ -88,13 +90,15 @@ const Tables = () => {
     const currentData = prev[key] || {
       description: originalParsedComment.description,
       foreignKeys: originalParsedComment.foreignKeys,
+      possibleValues: originalParsedComment.possibleValues,
     };
 
     const updatedData = { ...currentData, ...changes };
 
-    // Ensure description and foreignKeys are always defined for stringify
+    // Ensure description, foreignKeys, and possibleValues are always defined for stringify
     const descriptionToSave = updatedData.description ?? updatedData.originalDescription ?? '';
     const foreignKeysToSave = updatedData.foreignKeys ?? updatedData.originalForeignKeys ?? [];
+    const possibleValuesToSave = updatedData.possibleValues ?? updatedData.originalPossibleValues ?? '';
 
     let isActuallyModified = false;
 
@@ -109,6 +113,10 @@ const Tables = () => {
         [...updatedForeignKeysSet].some(key => !originalForeignKeysSet.has(key));
     }
 
+    if (originalParsedComment.possibleValues !== updatedData.possibleValues) {
+      isActuallyModified = true;
+    }
+
     console.log('isActuallyModified:', isActuallyModified);
 
     const newState = { ...prev };
@@ -118,6 +126,7 @@ const Tables = () => {
         ...updatedData,
         description: descriptionToSave,
         foreignKeys: foreignKeysToSave,
+        possibleValues: possibleValuesToSave,
         isModified: true,
         table: tableName,
         column: columnName,
@@ -150,7 +159,7 @@ const Tables = () => {
 
 
 
-  const handleColumnCommentChange = (tableName, column, value) => {
+  const handleColumnCommentChange = (tableName, column, value, possibleValues) => {
     setModifiedColumns(prev => {
       return getModifiedColumnsState(prev, tableName, column, { description: value });
     });
@@ -163,6 +172,12 @@ const Tables = () => {
   const handleDescriptionChange = (tableName, value) => {
     setModifiedDescriptions(prev => {
       return getModifiedDescriptionsState(prev, tableName, value);
+    });
+  };
+
+  const handleColumnPossibleValuesChange = (tableName, column, possibleValues) => {
+    setModifiedColumns(prev => {
+      return getModifiedColumnsState(prev, tableName, column, { possibleValues });
     });
   };
 
@@ -232,7 +247,7 @@ const Tables = () => {
     try {
       // Build groupedUpdates from modifiedColumns
       const groupedUpdates = Object.values(modifiedColumns).reduce((acc, modCol) => {
-        const { table, column, description, foreignKeys } = modCol;
+        const { table, column, description, foreignKeys, possibleValues } = modCol;
         if (!acc[table]) {
           acc[table] = {
             name: table,
@@ -243,7 +258,8 @@ const Tables = () => {
           name: column,
           comment: JSON.stringify({
             description: description || '',
-            foreignKeys: foreignKeys || []
+            foreignKeys: foreignKeys || [],
+            possibleValues: possibleValues || ''
           })
         });
         return acc;
@@ -382,6 +398,7 @@ const Tables = () => {
                                   <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Type</th>
                                   <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Description</th>
                                   <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Foreign Keys</th>
+                                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Possible Values</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -397,6 +414,7 @@ const Tables = () => {
                                     commentData={commentData}
                                     modifiedData={modifiedData}
                                     handleColumnCommentChange={handleColumnCommentChange}
+                                    handleColumnPossibleValuesChange={handleColumnPossibleValuesChange}
                                     tableName={tableName}
                                     getAllForeignKeyOptions={getAllForeignKeyOptions}
                                     handleForeignKeyChange={handleForeignKeyChange}
@@ -562,9 +580,6 @@ const MemoTableDescription = React.memo(({ tableName, description, modifiedDescr
     />);
 });
 
-
-const MemoTableRow = React.memo(TableRow);
-
 export function useDebouncedCallback(fn, delay = 300, deps = []) {
   const timer = useRef();
 
@@ -580,26 +595,47 @@ export function useDebouncedCallback(fn, delay = 300, deps = []) {
   return debounced;
 }
 
-function TableRow({ column, isModified, commentData, modifiedData, handleColumnCommentChange, tableName, getAllForeignKeyOptions, handleForeignKeyChange }) {
+
+const MemoTableRow = React.memo(TableRow);
+
+function TableRow({ column, isModified, commentData, modifiedData, handleColumnCommentChange, handleColumnPossibleValuesChange, tableName, getAllForeignKeyOptions, handleForeignKeyChange }) {
 
   const [text, setText] = useState(
     modifiedData?.description ?? (commentData.error ? '' : commentData.description)
+  );
+  // Add possibleValues state
+  const [possibleValues, setPossibleValues] = useState(
+    modifiedData?.possibleValues ?? (commentData.error ? '' : commentData.possibleValues)
   );
 
   useEffect(() => {
     if (modifiedData?.description !== undefined) {
       setText(modifiedData.description);
     }
-  }, [modifiedData?.description]);
+    // Sync possibleValues
+    if (modifiedData?.possibleValues !== undefined) {
+      setPossibleValues(modifiedData.possibleValues);
+    }
+  }, [modifiedData?.description, modifiedData?.possibleValues]);
 
   const debouncedColCommentUpdate = useDebouncedCallback((value) => {
     handleColumnCommentChange(tableName, column.name, value);
-  }
-    , 300, [handleColumnCommentChange, tableName, column.name]);
+  }, 300, [handleColumnCommentChange, tableName, column.name]);
+
+  // Debounced update for possibleValues
+  const debouncedPossibleValuesUpdate = useDebouncedCallback((value) => {
+    handleColumnPossibleValuesChange(tableName, column.name, value);
+  }, 300, [handleColumnPossibleValuesChange, tableName, column.name]);
 
   const onColumCommentChange = (e) => {
     setText(e.target.value);
     debouncedColCommentUpdate(e.target.value);
+  };
+
+  // Handler for possibleValues
+  const onPossibleValuesChange = (e) => {
+    setPossibleValues(e.target.value);
+    debouncedPossibleValuesUpdate(e.target.value);
   };
 
   const currentForeignKeys = modifiedData?.foreignKeys !== undefined
@@ -690,6 +726,27 @@ function TableRow({ column, isModified, commentData, modifiedData, handleColumnC
               ...base
             })
           }}
+        />
+      )}
+    </td>
+    {/* New possibleValues column */}
+    <td style={{ padding: '4px' }}>
+      {commentData.error ? (
+        <div style={{ color: 'red' }}>Invalid JSON format</div>
+      ) : (
+        <textarea
+          type="text"
+          value={possibleValues}
+          onChange={onPossibleValuesChange}
+          style={{
+            width: '100%',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #ddd',
+            backgroundColor: isModified ? '#fff59d' : 'white',
+          }}
+          rows={2}
+          placeholder="Possible values (optional)"
         />
       )}
     </td>
