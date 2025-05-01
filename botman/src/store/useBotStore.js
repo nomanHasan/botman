@@ -7,13 +7,13 @@ const useBotStore = create((set, get) => ({
   prompts: [],
   vectorStores: [],
   tables: [],
-  tableDetailsCache: {}, // Cache for storing details of fetched tables { tableName: { description: '...', columns: [...] } }
-  allTablesAndColumns: {}, // New state to store all tables and columns { tableName: [col1, col2], ... }
+  tableDetailsCache: {},
+  allTablesAndColumns: {},
   isLoading: false,
-  isLoadingTableDetails: false, // Separate loading state for table details
+  isLoadingTableDetails: false,
   isLoadingAllTablesAndColumns: false,
   error: null,
-  errorTableDetails: null, // Separate error state for table details
+  errorTableDetails: null,
   errorAllTablesAndColumns: null,
   selectedBot: null,
   selectedCommand: null,
@@ -21,7 +21,6 @@ const useBotStore = create((set, get) => ({
   selectedVectorStore: null,
   selectedBots: [],
   
-  // Fetch data functions
   fetchBots: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -77,23 +76,17 @@ const useBotStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Fetches details for a specific table and caches the result.
-   * @param {string} tableName The name of the table to fetch details for.
-   */
   fetchTableDetails: async (tableName) => {
-    // Check cache first
     if (get().tableDetailsCache[tableName]) {
-      return; // Already fetched
+      return;
     }
-
     set({ isLoadingTableDetails: true, errorTableDetails: null });
     try {
       const details = await botApi.getTableDetails(tableName);
       set(state => ({
         tableDetailsCache: {
           ...state.tableDetailsCache,
-          [tableName]: details // Store details under the table name key
+          [tableName]: details
         },
         isLoadingTableDetails: false
       }));
@@ -106,15 +99,10 @@ const useBotStore = create((set, get) => ({
     }
   },
 
-  /**
-   * Fetches all tables and their columns.
-   */
   fetchAllTablesAndColumns: async () => {
-    // Check if already fetched
     if (Object.keys(get().allTablesAndColumns).length > 0) {
       return;
     }
-
     set({ isLoadingAllTablesAndColumns: true, errorAllTablesAndColumns: null });
     try {
       const tablesAndColumns = await botApi.getAllTablesAndColumns();
@@ -131,35 +119,27 @@ const useBotStore = create((set, get) => ({
     }
   },
   
-  updateTablesData: async (tablesData) => { // Renamed function, parameter name changed for clarity
+  updateTablesData: async (tablesData) => {
     set({ isLoading: true, error: null });
     try {
-      const result = await botApi.updateMultipleTables(tablesData); // Call the new API function
-      
-      // Refresh tables data and details after update
-      // Clear cache as descriptions/comments might have changed
+      const result = await botApi.updateMultipleTables(tablesData);
       set({ tableDetailsCache: {} }); 
       await get().fetchTables(); 
-      await get().fetchAllTablesAndColumns(); // Fetch all tables and columns again
-      // Optionally re-fetch details for affected tables if needed immediately, 
-      // or let them be fetched on demand later.
-      
+      await get().fetchAllTablesAndColumns();
       set({ isLoading: false });
       return result;
     } catch (error) {
-      console.error('Error updating tables data:', error); // Updated error message
-      set({ error: error.message || 'Failed to update tables data', isLoading: false }); // Updated error message
+      console.error('Error updating tables data:', error);
+      set({ error: error.message || 'Failed to update tables data', isLoading: false });
       throw error;
     }
   },
   
-  // Modal actions
   setSelectedBot: (bot) => set({ selectedBot: bot }),
   setSelectedCommand: (command) => set({ selectedCommand: command }),
   setSelectedPrompt: (prompt) => set({ selectedPrompt: prompt }),
   setSelectedVectorStore: (vectorStore) => set({ selectedVectorStore: vectorStore }),
   
-  // Selection functions
   toggleBotSelection: (botId) => {
     set(state => {
       const isSelected = state.selectedBots.includes(botId);
@@ -181,20 +161,16 @@ const useBotStore = create((set, get) => ({
     set({ selectedBots: [] });
   },
   
-  // Bot actions
   updateBot: async (botId, botData) => {
     set({ isLoading: true, error: null });
     try {
       await botApi.updateBot(botId, botData);
-      
-      // Update the local state
       set((state) => ({
         bots: state.bots.map(bot => 
           bot.id === botId ? { ...bot, ...botData } : bot
         ),
         isLoading: false
       }));
-      
       return true;
     } catch (error) {
       console.error('Error updating bot:', error);
@@ -257,7 +233,6 @@ const useBotStore = create((set, get) => ({
         },
         bots: state.bots.map(bot => {
           if (bot.metadata?.vector_store_id === vectorStoreId) {
-            // Use destructuring and spread syntax to omit properties instead of delete
             const { vector_store_id, vector_store_updated, ...restMetadata } = bot.metadata;
             return { ...bot, metadata: restMetadata };
           }
@@ -276,7 +251,6 @@ const useBotStore = create((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const result = await botApi.updateMultipleVectorStores(botIds);
-      // Refresh the bots list after update
       await get().fetchBots();
       set({ isLoading: false });
       return result;

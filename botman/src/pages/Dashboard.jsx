@@ -3,10 +3,8 @@ import { Link } from 'react-router-dom';
 import useBotStore from '../store/useBotStore';
 import { botApi } from '../services';
 import { formatDistanceToNow } from 'date-fns';
+import ChatModal from '../components/ChatModal';
 
-/* eslint-disable */
-
-// Helper to format relative time using date-fns
 const getRelativeTime = (timestamp) => {
   if (!timestamp) return '';
   return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
@@ -22,7 +20,7 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
     return `${relative} (${date.toLocaleDateString()} ${date.toLocaleTimeString()})`;
   };
 
-  const { tables: allTables, fetchTables, isLoading } = useBotStore(); // Renamed 'tables' to 'allTables' locally for minimal changes below
+  const { tables: allTables, fetchTables, isLoading } = useBotStore();
   const [formData, setFormData] = useState({
     id: '',
     description: '',
@@ -32,14 +30,12 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch tables when modal opens
   useEffect(() => {
     if (isOpen && allTables.length === 0) {
       fetchTables();
     }
   }, [isOpen, allTables.length, fetchTables]);
 
-  // Update form data when bot changes
   useEffect(() => {
     if (bot) {
       setFormData({
@@ -87,7 +83,6 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
     setIsSaving(true);
 
     try {
-      // Extract changes
       const changes = {};
       if (formData.description !== bot.description) {
         changes.description = formData.description;
@@ -99,11 +94,8 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
         changes.tables = formData.tables;
       }
 
-      // Only update if something changed
       if (Object.keys(changes).length > 0) {
         await onUpdate(bot.id, changes);
-
-        // Also Update The Bot using updateMultipleVectorStores
       }
       onClose();
     } catch (error) {
@@ -113,7 +105,6 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
     }
   };
 
-  // Filter tables based on search term
   const filteredTables = allTables.filter(table =>
     table.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -331,147 +322,6 @@ const BotUpdateModal = ({ isOpen, onClose, bot, onUpdate }) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-};
-
-const ChatModal = ({ isOpen, onClose, bot, vectorStoreId }) => {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [tokenUsage, setTokenUsage] = useState(0);
-
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
-
-    const userMessage = { role: 'user', content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput('');
-    setLoading(true);
-
-    try {
-      const response = await botApi.chat({
-        input: [userMessage],
-        vectorStoreId,
-      });
-
-      const assistantMessage = { role: 'assistant', content: response.output_text };
-      setMessages((prev) => [...prev, assistantMessage]);
-      setTokenUsage((prev) => prev + response.token_usage);
-    } catch (error) {
-      console.error('Error during chat:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000,
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '20px',
-        borderRadius: '8px',
-        width: '80%',
-        maxWidth: '600px',
-        maxHeight: '80%',
-        overflowY: 'auto',
-      }}>
-        <h2>Chat with {bot.name}</h2>
-        <div style={{
-          maxHeight: '300px',
-          overflowY: 'auto',
-          marginBottom: '20px',
-          border: '1px solid #ddd',
-          padding: '10px',
-          borderRadius: '4px',
-        }}>
-          {messages.map((message, index) => (
-            <div key={index} style={{ marginBottom: '10px' }}>
-              <strong>{message.role === 'user' ? 'You' : 'Bot'}:</strong>
-              <p style={{ whiteSpace: 'pre-wrap', margin: '5px 0' }}>{message.content}</p>
-            </div>
-          ))}
-        </div>
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
-          style={{
-            width: '100%',
-            padding: '10px',
-            marginBottom: '10px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-          }}
-        />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button
-            type='button'
-            onClick={handleSendMessage}
-            disabled={loading}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#2196f3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !loading) {
-                handleSendMessage();
-              }
-            }}
-            onKeyUp={(e) => {
-              if (e.key === 'Enter' && !loading) {
-                handleSendMessage();
-              }
-            }}
-          >
-            {loading ? 'Sending...' : 'Send'}
-          </button>
-          <button
-            type='button'
-            onClick={onClose}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#f44336',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onClose();
-              }
-            }}
-            onKeyUp={(e) => {
-              if (e.key === 'Enter') {
-                onClose();
-              }
-            }}
-          >
-            Close
-          </button>
-        </div>
-        <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
-          Token Usage: {tokenUsage}
-        </div>
       </div>
     </div>
   );
@@ -822,12 +672,12 @@ const Dashboard = () => {
         bot={selectedBot}
         onUpdate={handleBotUpdate}
       />
-      <ChatModal
-        isOpen={isChatModalOpen}
-        onClose={() => setIsChatModalOpen(false)}
-        bot={selectedBot}
-        vectorStoreId={selectedBot?.metadata?.vector_store_id}
-      />
+      {isChatModalOpen && selectedBot && (
+        <ChatModal
+          onClose={() => setIsChatModalOpen(false)}
+          bot={selectedBot}
+        />
+      )}
     </div>
   );
 };

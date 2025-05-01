@@ -1,0 +1,307 @@
+/* ChatModal.css */
+
+.chat-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.chat-modal {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 80%;
+  max-width: 700px; /* Limit maximum width */
+  height: 85vh; /* Adjust height as needed */
+  max-height: 800px; /* Limit maximum height */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent content spill */
+}
+
+.chat-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background-color: #f7f7f7;
+}
+
+.chat-modal-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.client-input-container {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Spacing between label and input */
+    margin-left: auto; /* Push it towards the right, before the close button */
+    margin-right: 20px;
+}
+
+.client-input-container label {
+    font-size: 0.9em;
+    color: #555;
+}
+
+.client-input-container input {
+    padding: 5px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9em;
+    width: 150px; /* Adjust width as needed */
+}
+
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 1.8em;
+  cursor: pointer;
+  color: #888;
+  padding: 0 5px;
+  line-height: 1;
+}
+.close-modal-btn:hover {
+    color: #333;
+}
+
+.chat-container {
+  flex-grow: 1; /* Takes up available space */
+  padding: 20px;
+  overflow-y: auto; /* Enables scrolling for messages */
+  background-color: #fff;
+  display: flex;
+  flex-direction: column; /* Stack messages and results vertically */
+}
+
+.message {
+  margin-bottom: 15px;
+  max-width: 85%; /* Limit message width */
+  padding: 10px 15px;
+  border-radius: 12px;
+  line-height: 1.4;
+  word-wrap: break-word; /* Ensure long words break */
+}
+
+.user-message {
+  background-color: #e1f5fe; /* Light blue for user */
+  align-self: flex-end; /* Align user messages to the right */
+  margin-left: auto; /* Push to right */
+  border-bottom-right-radius: 0;
+}
+
+.assistant-message {
+  background-color: #f1f1f1; /* Light grey for assistant */
+  align-self: flex-start; /* Align assistant messages to the left */
+  margin-right: auto; /* Push to left */
+  border-bottom-left-radius: 0;
+}
+
+.message strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.9em;
+  color: #555;
+}
+
+.message-content-wrapper {
+    /* Allows relative positioning for buttons inside */
+    position: relative;
+}
+
+.copyable-user-message {
+    cursor: copy;
+    display: inline-block; /* Needed for proper interaction */
+}
+.copyable-user-message:hover {
+    opacity: 0.8;
+}
+
+
+.chat-input-form {
+  display: flex;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  background-color: #f7f7f7;
+}
+
+.chat-input-form textarea {
+  flex-grow: 1;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  margin-right: 10px;
+  resize: none; /* Disable manual resizing */
+  font-size: 1em;
+  line-height: 1.4;
+  min-height: 40px; /* Minimum height */
+  max-height: 120px; /* Maximum height before scrolling */
+  overflow-y: auto; /* Allow scrolling within textarea */
+}
+
+.chat-input-form button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s ease;
+}
+
+.chat-input-form button:hover {
+  background-color: #0056b3;
+}
+
+.chat-input-form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* SQL/Code Block Styling */
+.code-box,
+.sql-box {
+  background-color: #2d2d2d; /* Dark background for code */
+  color: #f1f1f1; /* Light text */
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 15px;
+  margin: 10px 0;
+  position: relative;
+  white-space: pre-wrap; /* Preserve whitespace and wrap */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  overflow-x: auto; /* Allow horizontal scrolling for long lines */
+}
+
+.code-box pre,
+.sql-box pre {
+    margin: 0; /* Remove default pre margin */
+    padding-top: 35px; /* Space for buttons */
+}
+
+.copy-btn,
+.exec-btn {
+  position: absolute;
+  top: 8px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.copy-btn {
+  right: 8px;
+  background-color: #555;
+}
+.copy-btn:hover {
+    background-color: #777;
+}
+
+.exec-btn {
+  right: 60px; /* Position left of copy button */
+  background-color: #007bff;
+}
+.exec-btn:hover {
+    background-color: #0056b3;
+}
+.exec-btn:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+
+/* SQL Results Table Styling */
+.results-container {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.results-header h3 {
+    margin: 0;
+    font-size: 1.1em;
+}
+
+.close-btn {
+  background-color: #f44336; /* Red */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+.close-btn:hover {
+    background-color: #d32f2f;
+}
+
+.executed-sql-display {
+    background-color: #eee;
+    padding: 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.table-wrapper {
+    max-height: 300px; /* Limit table height */
+    overflow-y: auto; /* Allow vertical scrolling for long tables */
+    margin-top: 10px;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.result-table th,
+.result-table td {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+  vertical-align: top; /* Align content top */
+}
+
+.result-table th {
+  background-color: #e9ecef;
+  font-weight: bold;
+  position: sticky; /* Make header sticky */
+  top: 0; /* Stick to the top of the wrapper */
+  z-index: 1; /* Ensure header is above table body */
+}
+
+.result-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.result-table tr:hover {
+  background-color: #e9ecef;
+}
+
