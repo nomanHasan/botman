@@ -452,6 +452,11 @@ const Dashboard = () => {
     setIsChatModalOpen(true);
   };
 
+  const handleOpenFile = (bot, e) => {
+    if (e) e.stopPropagation();
+    alert(`Opening file for ${bot.id}`);
+  };
+
   const truncateText = (text, maxLength = 50) => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
@@ -480,6 +485,18 @@ const Dashboard = () => {
   if (error) {
     return <div style={{ padding: '20px', color: 'red', textAlign: 'center' }}>Error: {error}</div>;
   }
+
+  const sortedBots = [...bots].sort((a, b) => {
+    const aIsNoSql = a.metadata?.nosql === true;
+    const bIsNoSql = b.metadata?.nosql === true;
+
+    if (aIsNoSql && !bIsNoSql) return 1;
+    if (!aIsNoSql && bIsNoSql) return -1;
+    return 0;
+  });
+
+  const regularBots = sortedBots.filter(bot => bot.metadata?.nosql !== true);
+  const nosqlBots = sortedBots.filter(bot => bot.metadata?.nosql === true);
 
   return (
     <div style={{ padding: '20px', color: '#333333' }}>
@@ -514,132 +531,276 @@ const Dashboard = () => {
                 <td colSpan="9" style={{ padding: '20px', textAlign: 'center' }}>No bots found</td>
               </tr>
             ) : (
-              bots.map((bot) => (
-                <tr
-                  key={bot.id}
-                  style={{
-                    borderBottom: '1px solid #eee',
-                    cursor: 'pointer',
-                    backgroundColor: selectedBots.includes(bot.id) ? '#e3f2fd' : 'transparent'
-                  }}
-                >
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <input
-                      type="checkbox"
-                      checked={selectedBots.includes(bot.id)}
-                      onChange={(e) => toggleBotSelection(bot.id, e)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </td>
-                  <td style={{ padding: '12px' }}>{bot.id}</td>
-                  <td style={{ padding: '12px' }}>
-                    <div
-                      title={bot.description || ''}
-                      style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                    >
-                      {truncateText(bot.description, 30) || 'No description'}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    <div
-                      title={bot.prompt || ''}
-                      style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                    >
-                      {truncateText(bot.prompt, 30) || 'No prompt'}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    <div title={bot.tables?.join(', ') || 'No tables'} style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {truncateTables(bot.tables)}
-                    </div>
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    {bot.associated_commands && bot.associated_commands.length > 0
-                      ? `Command #${bot.associated_commands[0].command_id}`
-                      : 'No command'}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    {bot.metadata?.vector_store_id ? (
-                      <div style={{
-                        padding: '5px 10px',
-                        borderRadius: '4px',
-                        display: 'inline-block',
-                        maxWidth: '150px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                        title={bot.metadata.vector_store_id}
+              <>
+                {regularBots.map((bot) => (
+                  <tr
+                    key={bot.id}
+                    style={{
+                      borderBottom: '1px solid #eee',
+                      cursor: 'pointer',
+                      backgroundColor: selectedBots.includes(bot.id) ? '#e3f2fd' : 'transparent'
+                    }}
+                  >
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedBots.includes(bot.id)}
+                        onChange={(e) => toggleBotSelection(bot.id, e)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </td>
+                    <td style={{ padding: '12px' }}>{bot.id}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div
+                        title={bot.description || ''}
+                        style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                       >
-                        {truncateText(bot.metadata.vector_store_id, 15)}
+                        {truncateText(bot.description, 30) || 'No description'}
                       </div>
-                    ) : (
-                      <div style={{
-                        padding: '5px 10px',
-                        borderRadius: '4px',
-                        display: 'inline-block'
-                      }}>
-                        Not created
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <div
+                        title={bot.prompt || ''}
+                        style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      >
+                        {truncateText(bot.prompt, 30) || 'No prompt'}
                       </div>
-                    )}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    {formatVectorStoreUpdate(bot)}
-                  </td>
-                  <td style={{ padding: '12px' }}>
-                    <div style={{ display: 'flex', gap: '5px' }}>
-                      <button
-                        type="button"
-                        onClick={(e) => handleUpdateBot(bot, e)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            handleUpdateBot(bot, e);
-                          }
-                        }}
-                        onKeyUp={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            handleUpdateBot(bot, e);
-                          }
-                        }}
-                        style={{
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <div title={bot.tables?.join(', ') || 'No tables'} style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {truncateTables(bot.tables)}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      {bot.associated_commands && bot.associated_commands.length > 0
+                        ? `Command #${bot.associated_commands[0].command_id}`
+                        : 'No command'}
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      {bot.metadata?.vector_store_id ? (
+                        <div style={{
                           padding: '5px 10px',
-                          backgroundColor: '#2196f3',
-                          color: 'white',
-                          border: 'none',
                           borderRadius: '4px',
-                          cursor: 'pointer'
+                          display: 'inline-block',
+                          maxWidth: '150px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
                         }}
-                      >
-                        Update
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => handleChat(bot, e)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            handleChat(bot, e);
-                          }
-                        }}
-                        onKeyUp={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            handleChat(bot, e);
-                          }
-                        }}
-                        style={{
+                          title={bot.metadata.vector_store_id}
+                        >
+                          {truncateText(bot.metadata.vector_store_id, 15)}
+                        </div>
+                      ) : (
+                        <div style={{
                           padding: '5px 10px',
-                          backgroundColor: 'hsl(83 25% 45% / 1)',
-                          color: 'white',
-                          border: 'none',
                           borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
+                          display: 'inline-block'
+                        }}>
+                          Not created
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      {formatVectorStoreUpdate(bot)}
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleUpdateBot(bot, e)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleUpdateBot(bot, e);
+                            }
+                          }}
+                          onKeyUp={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleUpdateBot(bot, e);
+                            }
+                          }}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#2196f3',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Update
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleChat(bot, e)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleChat(bot, e);
+                            }
+                          }}
+                          onKeyUp={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleChat(bot, e);
+                            }
+                          }}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: 'hsl(83 25% 45% / 1)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Chat
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {regularBots.length > 0 && nosqlBots.length > 0 && (
+                  <tr>
+                    <td colSpan="9" style={{ 
+                      padding: '10px', 
+                      textAlign: 'center',
+                      backgroundColor: '#f5f5f5',
+                      borderTop: '2px solid #ddd',
+                      borderBottom: '2px solid #ddd',
+                      fontWeight: 'bold'
+                    }}>
+                      File-based Bots
+                    </td>
+                  </tr>
+                )}
+
+                {nosqlBots.map((bot) => (
+                  <tr
+                    key={bot.id}
+                    style={{
+                      borderBottom: '1px solid #eee',
+                      cursor: 'pointer',
+                      backgroundColor: selectedBots.includes(bot.id) ? '#e3f2fd' : '#f9f9f9'
+                    }}
+                  >
+                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedBots.includes(bot.id)}
+                        onChange={(e) => toggleBotSelection(bot.id, e)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </td>
+                    <td style={{ padding: '12px' }}>{bot.id}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div
+                        title={bot.description || ''}
+                        style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                       >
-                        Chat
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                        {truncateText(bot.description, 30) || 'No description'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <div
+                        title={bot.prompt || ''}
+                        style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      >
+                        {truncateText(bot.prompt, 30) || 'No prompt'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <div title={bot.tables?.join(', ') || 'No tables'} style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {truncateTables(bot.tables)}
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      {bot.associated_commands && bot.associated_commands.length > 0
+                        ? `Command #${bot.associated_commands[0].command_id}`
+                        : 'No command'}
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      {bot.metadata?.vector_store_id ? (
+                        <div style={{
+                          padding: '5px 10px',
+                          borderRadius: '4px',
+                          display: 'inline-block',
+                          maxWidth: '150px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                          title={bot.metadata.vector_store_id}
+                        >
+                          {truncateText(bot.metadata.vector_store_id, 15)}
+                        </div>
+                      ) : (
+                        <div style={{
+                          padding: '5px 10px',
+                          borderRadius: '4px',
+                          display: 'inline-block'
+                        }}>
+                          Not created
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      {formatVectorStoreUpdate(bot)}
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleOpenFile(bot, e)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleOpenFile(bot, e);
+                            }
+                          }}
+                          onKeyUp={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleOpenFile(bot, e);
+                            }
+                          }}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#9c27b0',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Open File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleChat(bot, e)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleChat(bot, e);
+                            }
+                          }}
+                          onKeyUp={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              handleChat(bot, e);
+                            }
+                          }}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: 'hsl(83 25% 45% / 1)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Chat
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </>
             )}
           </tbody>
         </table>

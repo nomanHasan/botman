@@ -29,8 +29,24 @@ const Header = () => {
       justifyContent: 'space-between',
       alignItems: 'center'
     }}>
-      <div>
-        <h1 style={{ fontSize: '1.5rem', margin: 0, color: '#222222' }}>Bot Manager</h1>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '1.5rem',
+        fontWeight: 600,
+        color: '#222222'
+      }}>
+        {/* <img
+          src="/botman/botkhenect.png"
+          alt="Logo"
+          style={{
+            width: '40px',
+            height: '40px',
+            marginRight: '10px'
+          }}
+        /> */}
+        <span style={{ fontSize: '1.5rem', fontWeight: 600, color: '#222222' }}>Bot Manager</span>
+        {/* <h1 style={{ fontSize: '1.5rem', margin: 0, color: '#222222' }}>Bot Manager</h1> */}
       </div>
       <nav>
         <Link 
