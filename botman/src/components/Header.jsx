@@ -53,7 +53,7 @@ const Header = () => {
           to="/dashboard" 
           style={{ 
             ...navLinkStyle,
-            ...(isActive('/') || isActive('/dashboard') ? activeStyle : {})
+            ...(isActive('/dashboard') ? activeStyle : {})
           }}
         >
           Dashboard
@@ -62,10 +62,19 @@ const Header = () => {
           to="/tables" 
           style={{ 
             ...navLinkStyle,
-            ...(isActive('/') || isActive('/tables') ? activeStyle : {})
+            ...(isActive('/tables') ? activeStyle : {})
           }}
         >
           Tables
+        </Link>
+        <Link 
+          to="/2steps-chat" 
+          style={{ 
+            ...navLinkStyle,
+            ...(isActive('/2steps-chat') ? activeStyle : {})
+          }}
+        >
+          2Steps Chat
         </Link>
         {/* <Link 
           to="/commands" 

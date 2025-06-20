@@ -194,12 +194,12 @@ const botApi = {
    * @param {Array} history - The chat history [{role: 'user'/'assistant', content: '...'}].
    * @returns {Promise<object>} - The assistant's response { response: string }.
    */
-  chatWithBot: async (botId, history) => {
+  chatWithBot: async (botId, history, model = 'gpt-4o') => {
     try {
       const messages = [
         ...history
       ];
-      const response = await httpClient.post(`${API_ENDPOINTS.BOTMANAGER}/bots/${botId}/chat`, { messages });
+      const response = await httpClient.post(`${API_ENDPOINTS.BOTMANAGER}/bots/${botId}/chat`, { messages, model: model });
       const assistantMessage = response?.output?.find(item => item.type === 'message' && item.role === 'assistant');
       const botResponseText = assistantMessage?.content?.[0]?.text || "Sorry, I couldn't get a response.";
       return { response: botResponseText };
@@ -226,7 +226,24 @@ const botApi = {
       const errorMessage = error.response?.data?.message || error.message || "An error occurred while executing the SQL query.";
       return { error: true, message: errorMessage };
     }
-  }
+  },
+  getAllModels: async () => {
+    const response = await httpClient.get(`${API_ENDPOINTS.BOTMANAGER}/models`);
+
+    const models = response?.data?.data || [];
+
+    console.log("Models fetched:", models);
+
+
+    // {
+    //   "id": "gpt-4-1106-preview",
+    //   "object": "model",
+    //   "created": 1698957206,
+    //   "owned_by": "system"
+    // }
+
+    return response.data;
+  },
 };
 
 export default botApi;

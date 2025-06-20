@@ -826,6 +826,19 @@ const Dashboard = () => {
             : `Update Vector Stores (${selectedBots.length})`}
         </button>
       </div>
+      
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <Link to="/2steps-chat" style={{
+          textDecoration: 'none',
+          color: '#ffffff',
+          backgroundColor: '#4caf50',
+          padding: '10px 20px',
+          borderRadius: '4px',
+          fontWeight: 'bold'
+        }}>
+          2 Steps Chat Demo
+        </Link>
+      </div>
 
       <BotUpdateModal
         isOpen={isUpdateModalOpen}

@@ -1,0 +1,132 @@
+/* TwoStepsChat.css */
+
+.two-steps-chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px);
+  width: 100%;
+  background-color: #f5f5f5;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.bot-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bot-selector label {
+  font-weight: 500;
+  color: #333;
+}
+
+.bot-selector select {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  font-size: 1rem;
+  min-width: 250px;
+}
+
+.chat-wrapper {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.no-bot-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1.2rem;
+  color: #666;
+  background-color: #f9f9f9;
+}
+
+/* Full screen chat modal styles */
+.chat-modal-fullscreen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.chat-modal-fullscreen .chat-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background-color: #f7f7f7;
+}
+
+.chat-modal-fullscreen .chat-modal-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.chat-modal-fullscreen .chat-container {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-modal-fullscreen .chat-input-form {
+  display: flex;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  background-color: #f7f7f7;
+}
+
+.chat-modal-fullscreen .chat-input-form textarea {
+  flex-grow: 1;
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  margin-right: 10px;
+  resize: none;
+  font-size: 1em;
+  line-height: 1.4;
+  min-height: 40px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.chat-modal-fullscreen .chat-input-form button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s ease;
+}
+
+.chat-modal-fullscreen .chat-input-form button:hover {
+  background-color: #0056b3;
+}
+
+.chat-modal-fullscreen .chat-input-form button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Reusing existing message styles from ChatModal.css */

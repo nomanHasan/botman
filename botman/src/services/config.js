@@ -15,6 +15,7 @@ const API_BASE_URLS = {
 // API endpoints
 export const API_ENDPOINTS = {
   BOTMANAGER: '/api/botmanager',
+  TWOSTEPS_CHAT: '/api/2steps-chat',
 };
 
 // Current environment base URL
