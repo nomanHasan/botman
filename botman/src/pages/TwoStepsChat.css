@@ -130,3 +130,112 @@
 }
 
 /* Reusing existing message styles from ChatModal.css */
+
+/* Per-message SQL results container - better integration */
+.message-content-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.message-sql-results {
+  margin: 15px 0 5px 0;
+  padding: 12px;
+  background-color: rgba(0, 123, 255, 0.05);
+  border: 1px solid rgba(0, 123, 255, 0.2);
+  border-radius: 6px;
+  max-width: 100%;
+  overflow: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.message-sql-results .results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 123, 255, 0.2);
+  padding-bottom: 6px;
+}
+
+.message-sql-results h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0056b3;
+}
+
+.message-sql-results .close-btn {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: #d32f2f;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.message-sql-results .close-btn:hover {
+  background-color: rgba(244, 67, 54, 0.2);
+  border-color: #d32f2f;
+}
+
+.message-sql-results .table-wrapper {
+  overflow-x: auto;
+  margin-top: 10px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.message-sql-results .result-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.message-sql-results .result-table th,
+.message-sql-results .result-table td {
+  border: 1px solid #e0e0e0;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.message-sql-results .result-table th {
+  background-color: rgba(0, 123, 255, 0.1);
+  font-weight: 600;
+  color: #0056b3;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.message-sql-results .result-table tr:nth-child(even) {
+  background-color: rgba(248, 249, 250, 0.8);
+}
+
+.message-sql-results .result-table tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+.message-sql-results .executed-sql-display {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: rgba(248, 249, 250, 0.9);
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  overflow-x: auto;
+  color: #666;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Make error messages more prominent in per-message results */
+.message-sql-results .error-message {
+  color: #d32f2f;
+  background-color: rgba(244, 67, 54, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  font-size: 0.9rem;
+}
