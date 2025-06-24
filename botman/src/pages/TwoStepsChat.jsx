@@ -82,7 +82,12 @@ const TwoStepsChatInterface = () => {
       }
       
       const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const assistantMessage = { id: assistantMessageId, role: 'assistant', content: assistantContent };
+      const assistantMessage = { 
+        id: assistantMessageId, 
+        role: 'assistant', 
+        content: assistantContent,
+        status: response.status // Store the status for display
+      };
       
       // If we have SQL and results, automatically store them for this message
       if (response.status === 'OK' && response.sql && response.result) {
@@ -94,6 +99,11 @@ const TwoStepsChatInterface = () => {
           }
         }));
       }
+
+      // Still Show sql in case of error, but make the execute button disabled
+      if (response.status !== 'OK' && response.sql) {
+        assistantMessage.content += `\n\n\`\`\`sql\n${response.sql}\n\`\`\``;
+      }
       
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
@@ -102,7 +112,8 @@ const TwoStepsChatInterface = () => {
       const errorMessage = { 
         id: errorMessageId, 
         role: 'assistant', 
-        content: `Sorry, I encountered an error: ${error.message || 'Unknown error'}` 
+        content: `Sorry, I encountered an error: ${error.message || 'Unknown error'}`,
+        status: 'ERROR' // Add error status
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -266,6 +277,31 @@ const TwoStepsChatInterface = () => {
     return parts.length > 0 ? parts : content;
   };
 
+  const renderStatusPill = (status) => {
+    if (!status) return null;
+    
+    const getStatusColor = (status) => {
+      switch (status.toUpperCase()) {
+        case 'OK':
+          return 'success';
+        case 'ERROR':
+          return 'error';
+        case 'PENDING':
+          return 'pending';
+        case 'WARNING':
+          return 'warning';
+        default:
+          return 'default';
+      }
+    };
+
+    return (
+      <span className={`status-pill status-${getStatusColor(status)}`}>
+        {status}
+      </span>
+    );
+  };
+
 
 
   return (
@@ -291,7 +327,10 @@ const TwoStepsChatInterface = () => {
             key={message.id || index}
             className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
           >
-            <strong>{message.role === 'user' ? 'You' : 'Assistant'}:</strong>
+            <div className="message-header">
+              <strong>{message.role === 'user' ? 'You' : 'Assistant'}:</strong>
+              {message.role === 'assistant' && message.status && renderStatusPill(message.status)}
+            </div>
             <div className="message-content-wrapper">
               {renderMessageContent(message.content, message.role, message.id || index)}
               {message.role === 'assistant' && messageResults[message.id || index] && renderMessageSqlResults(message.id || index)}
