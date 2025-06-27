@@ -446,9 +446,14 @@ const TwoStepsChatInterface = ({ isDisabled = false }) => {
     const overallCost = tablePassCost.total + sqlPassCost.total;
 
     // Format cost for display with high precision
-    const formatCost = (cost) => {
+    const formatCost = (cost, length = 6, cents = false) => {
+      if (cents && cost < 1) {
+      const centsValue = cost * 100;
+      // Use ¢ (U+00A2) for cents symbol
+      return `${centsValue.toFixed(2)}¢`;
+      }
       if (cost < 0.000001) return '$0.000000';
-      return `$${cost.toFixed(6)}`;
+      return `$${cost.toFixed(length)}`;
     };
 
     // Helper to render ellipsis with tooltip
@@ -608,7 +613,7 @@ const TwoStepsChatInterface = ({ isDisabled = false }) => {
         >
           <span className="token-count">~{Math.round(totalAdjustedTokens).toLocaleString()}</span>
           <span className="token-label">TOKEN</span>
-          <span className="cost-estimate">~{formatCost(overallCost)}</span>
+          <span className="cost-estimate">~{formatCost(overallCost, 2)}</span>
         </button>
         
         <Tooltip
