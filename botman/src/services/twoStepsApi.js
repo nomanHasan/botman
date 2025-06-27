@@ -76,6 +76,21 @@ const twoStepsApi = {
   getAllModels: async () => {
     const response = await httpClient.get(`${API_ENDPOINTS.TWOSTEPS_CHAT}/models`);
     return response.data;
+  },
+
+  /**
+   * Refetch database schemas
+   * @returns {Promise<object>} - The refetch result with status and message
+   */
+  refetchSchema: async () => {
+    try {
+      const response = await httpClient.get(`${API_ENDPOINTS.TWOSTEPS_CHAT}/refetch-schema`);
+      return response;
+    } catch (error) {
+      console.error('API Error refetching schema:', error);
+      const errorMessage = error.response?.data?.message || error.message || "An error occurred while refetching database schemas.";
+      throw new Error(errorMessage);
+    }
   }
 };
 

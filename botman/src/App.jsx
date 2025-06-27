@@ -7,25 +7,29 @@ import Prompts from './pages/Prompts';
 import VectorStores from './pages/VectorStores';
 import Tables from './pages/Tables';
 import TwoStepsChat from './pages/TwoStepsChat';
+import ToastContainer from './components/ToastContainer';
 import './App.css';
 
 function App() {
   return (
-    <Router basename="/botman">
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/commands" element={<Commands />} />
-          <Route path="/prompts" element={<Prompts />} />
-          <Route path="/vector-stores" element={<VectorStores />} />
-          <Route path="/tables" element={<Tables />} />
-          <Route path="/2steps-chat" element={<TwoStepsChat />} />
-          <Route path="/commands/:commandId" element={<Commands />} />
-          <Route path="/prompts/:promptId" element={<Prompts />} />
-        </Route>
-      </Routes>
-    </Router>
+    <>
+      <ToastContainer />
+      <Router basename="/botman">
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/commands" element={<Commands />} />
+            <Route path="/prompts" element={<Prompts />} />
+            <Route path="/vector-stores" element={<VectorStores />} />
+            <Route path="/tables" element={<Tables />} />
+            <Route path="/2steps-chat" element={<TwoStepsChat />} />
+            <Route path="/commands/:commandId" element={<Commands />} />
+            <Route path="/prompts/:promptId" element={<Prompts />} />
+          </Route>
+        </Routes>
+      </Router>
+    </>
   );
 }
 

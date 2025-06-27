@@ -7,6 +7,8 @@ import botApi from './botApi';
 import twoStepsApi from './twoStepsApi';
 import { API_ENDPOINTS, BASE_URL, getApiUrl } from './config';
 
+import {showToast} from './toastService';
+
 export {
   httpClient,
   botApi,
@@ -14,4 +16,5 @@ export {
   API_ENDPOINTS,
   BASE_URL,
   getApiUrl,
+  showToast,
 };

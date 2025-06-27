@@ -1,0 +1,28 @@
+.toast-notification-global {
+    font-size: 32px;
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #222;
+    color: #fff;
+    padding: 14px 32px;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+    /* font-size: 1.1rem; */
+    z-index: 9999;
+    opacity: 0.97;
+    animation: toast-fade-in 0.2s;
+}
+
+@keyframes toast-fade-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(30px);
+    }
+
+    to {
+        opacity: 0.97;
+        transform: translateX(-50%) translateY(0);
+    }
+}
