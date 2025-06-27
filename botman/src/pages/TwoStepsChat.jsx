@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Tooltip } from 'react-tooltip';
 import { botApi, twoStepsApi } from '../services';
 import { showToast } from '../services/toastService';
 import './TwoStepsChat.css';
@@ -451,12 +452,10 @@ const TwoStepsChatInterface = ({ isDisabled = false }) => {
     };
 
     // Helper to render ellipsis with tooltip
-    const renderEllipsisSpan = (str, label) => (
+    const renderEllipsisSpan = (str) => (
       <span
         className="ellipsis-span"
         title={str || ''}
-        aria-label={label}
-        tabIndex={0}
         style={{
           display: 'inline-block',
           maxWidth: 220,
@@ -477,193 +476,161 @@ const TwoStepsChatInterface = ({ isDisabled = false }) => {
       </span>
     );
 
-    // Generate unique IDs for anchor and popover elements
-    const anchorId = `token-pill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const popoverId = `token-popover-${anchorId}`;
+    // Generate unique ID for tooltip
+    const tooltipId = `token-tooltip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Handlers for popover interaction
-    const handlePillInteraction = (event) => {
-      const popover = document.getElementById(popoverId);
-      if (!popover) return;
-
-      if (event.type === 'mouseenter' || event.type === 'focus') {
-        popover.showPopover();
-      } else if (event.type === 'mouseleave' || event.type === 'blur') {
-        // Small delay to allow moving to popover
-        setTimeout(() => {
-          if (!popover.matches(':hover') && document.activeElement !== popover) {
-            popover.hidePopover();
-          }
-        }, 100);
-      }
-    };
-
-    const handlePopoverInteraction = (event) => {
-      const popover = document.getElementById(popoverId);
-      if (!popover) return;
-
-      if (event.type === 'mouseleave') {
-        const pill = document.getElementById(anchorId);
-        if (!pill || !pill.matches(':hover')) {
-          popover.hidePopover();
-        }
-      }
-    };
+    // Create the detailed tooltip content
+    const tooltipContent = (
+      <div className="token-tooltip-content">
+        <div className="tooltip-section">
+          <div className="tooltip-title">Total Usage & Cost</div>
+          <div className="tooltip-item">
+            <div className="tooltip-row">
+              <span>Raw Tokens:</span>
+              <span>{totalTokens.toLocaleString()}</span>
+            </div>
+            <div className="tooltip-row">
+              <span>Adjusted Tokens:</span>
+              <span>{Math.round(totalAdjustedTokens).toLocaleString()} <small>(cost-equivalent)</small></span>
+            </div>
+            <div className="tooltip-row tooltip-total">
+              <span>Estimated Cost:</span>
+              <span className="cost-highlight">{formatCost(overallCost)}</span>
+            </div>
+          </div>
+        </div>
+        
+        {tablePass && (tablePass.prompt_tokens || tablePass.completion_tokens) && (
+          <div className="tooltip-section">
+            <div className="tooltip-title">Table Pass Breakdown</div>
+            <div className="tooltip-item">
+              <div className="tooltip-row">
+                <span>Cached Tokens:</span>
+                <span>{(tablePass.prompt_tokens_details?.cached_tokens || 0).toLocaleString()} ({formatCost(tablePassCost.cached)})</span>
+              </div>
+              <div className="tooltip-row">
+                <span>Uncached Tokens:</span>
+                <span>{((tablePass.prompt_tokens || 0) - (tablePass.prompt_tokens_details?.cached_tokens || 0)).toLocaleString()} ({formatCost(tablePassCost.uncached)})</span>
+              </div>
+              <div className="tooltip-row">
+                <span>Output Tokens:</span>
+                <span>{(tablePass.completion_tokens || 0).toLocaleString()} ({formatCost(tablePassCost.output)})</span>
+              </div>
+              <div className="tooltip-row tooltip-subtotal">
+                <span>Subtotal:</span>
+                <span>{formatCost(tablePassCost.total)}</span>
+              </div>
+              {tablePass.input && (
+                <div className="tooltip-row">
+                  <span>Input String:</span>
+                  {renderEllipsisSpan(
+                    Array.isArray(tablePass.input)
+                      ? tablePass.input.map(m => m.content).join(' | ')
+                      : String(tablePass.input)
+                  )}
+                </div>
+              )}
+              {tablePass.output && (
+                <div className="tooltip-row">
+                  <span>Output String:</span>
+                  {renderEllipsisSpan(String(tablePass.output))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {sqlPass && (sqlPass.prompt_tokens || sqlPass.completion_tokens) && (
+          <div className="tooltip-section">
+            <div className="tooltip-title">SQL Pass Breakdown</div>
+            <div className="tooltip-item">
+              <div className="tooltip-row">
+                <span>Cached Tokens:</span>
+                <span>{(sqlPass.prompt_tokens_details?.cached_tokens || 0).toLocaleString()} ({formatCost(sqlPassCost.cached)})</span>
+              </div>
+              <div className="tooltip-row">
+                <span>Uncached Tokens:</span>
+                <span>{((sqlPass.prompt_tokens || 0) - (sqlPass.prompt_tokens_details?.cached_tokens || 0)).toLocaleString()} ({formatCost(sqlPassCost.uncached)})</span>
+              </div>
+              <div className="tooltip-row">
+                <span>Output Tokens:</span>
+                <span>{(sqlPass.completion_tokens || 0).toLocaleString()} ({formatCost(sqlPassCost.output)})</span>
+              </div>
+              <div className="tooltip-row tooltip-subtotal">
+                <span>Subtotal:</span>
+                <span>{formatCost(sqlPassCost.total)}</span>
+              </div>
+              {sqlPass.input && (
+                <div className="tooltip-row">
+                  <span>Input String:</span>
+                  {renderEllipsisSpan(
+                    Array.isArray(sqlPass.input)
+                      ? sqlPass.input.map(m => m.content).join(' | ')
+                      : String(sqlPass.input)
+                  )}
+                </div>
+              )}
+              {sqlPass.output && (
+                <div className="tooltip-row">
+                  <span>Output String:</span>
+                  {renderEllipsisSpan(String(sqlPass.output))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        <div className="tooltip-section pricing-info">
+          <div className="tooltip-title">Pricing</div>
+          <div className="tooltip-item">
+            <div className="tooltip-row">
+              <span>Cached Input:</span>
+              <span>$0.50/1M tokens</span>
+            </div>
+            <div className="tooltip-row">
+              <span>Uncached Input:</span>
+              <span>$2.00/1M tokens</span>
+            </div>
+            <div className="tooltip-row">
+              <span>Output:</span>
+              <span>$8.00/1M tokens</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
 
     return (
-      <div className="token-usage-pill-container">
+      <>
         <button
-          id={anchorId}
+          data-tooltip-id={tooltipId}
           className="token-usage-pill"
-          aria-describedby={popoverId}
-          onMouseEnter={handlePillInteraction}
-          onMouseLeave={handlePillInteraction}
-          onFocus={handlePillInteraction}
-          onBlur={handlePillInteraction}
-          onClick={() => document.getElementById(popoverId)?.togglePopover()}
         >
           <span className="token-count">~{Math.round(totalAdjustedTokens).toLocaleString()}</span>
           <span className="token-label">TOKEN</span>
           <span className="cost-estimate">~{formatCost(overallCost)}</span>
         </button>
         
-        <div
-          id={popoverId}
-          popover="hint"
-          className="token-usage-popover"
-          onMouseLeave={handlePopoverInteraction}
-          role="tooltip"
-          aria-label="Token usage details"
-        >
-          <div className="popover-section">
-            <div className="popover-title">Total Usage & Cost</div>
-            <div className="popover-item">
-              <div className="popover-row">
-                <span>Raw Tokens:</span>
-                <span>{totalTokens.toLocaleString()}</span>
-              </div>
-              <div className="popover-row">
-                <span>Adjusted Tokens:</span>
-                <span>{Math.round(totalAdjustedTokens).toLocaleString()} <small>(cost-equivalent)</small></span>
-              </div>
-              <div className="popover-row popover-total">
-                <span>Estimated Cost:</span>
-                <span className="cost-highlight">{formatCost(overallCost)}</span>
-              </div>
-            </div>
-          </div>
-          
-          {tablePass && (tablePass.prompt_tokens || tablePass.completion_tokens) && (
-            <div className="popover-section">
-              <div className="popover-title">Table Pass Breakdown</div>
-              <div className="popover-item">
-                <div className="popover-row">
-                  <span>Cached Tokens:</span>
-                  <span>{(tablePass.prompt_tokens_details?.cached_tokens || 0).toLocaleString()} ({formatCost(tablePassCost.cached)})</span>
-                </div>
-                <div className="popover-row">
-                  <span>Uncached Tokens:</span>
-                  <span>{((tablePass.prompt_tokens || 0) - (tablePass.prompt_tokens_details?.cached_tokens || 0)).toLocaleString()} ({formatCost(tablePassCost.uncached)})</span>
-                </div>
-                <div className="popover-row">
-                  <span>Output Tokens:</span>
-                  <span>{(tablePass.completion_tokens || 0).toLocaleString()} ({formatCost(tablePassCost.output)})</span>
-                </div>
-                <div className="popover-row popover-subtotal">
-                  <span>Subtotal:</span>
-                  <span>{formatCost(tablePassCost.total)}</span>
-                </div>
-                {/* New: Input String row */}
-                {tablePass.input && (
-                  <div className="popover-row">
-                    <span>Input String:</span>
-                    {renderEllipsisSpan(
-                      Array.isArray(tablePass.input)
-                        ? tablePass.input.map(m => m.content).join(' | ')
-                        : String(tablePass.input),
-                      'Table Pass Input String'
-                    )}
-                  </div>
-                )}
-                {/* New: Output String row */}
-                {tablePass.output && (
-                  <div className="popover-row">
-                    <span>Output String:</span>
-                    {renderEllipsisSpan(
-                      String(tablePass.output),
-                      'Table Pass Output String'
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
-          {sqlPass && (sqlPass.prompt_tokens || sqlPass.completion_tokens) && (
-            <div className="popover-section">
-              <div className="popover-title">SQL Pass Breakdown</div>
-              <div className="popover-item">
-                <div className="popover-row">
-                  <span>Cached Tokens:</span>
-                  <span>{(sqlPass.prompt_tokens_details?.cached_tokens || 0).toLocaleString()} ({formatCost(sqlPassCost.cached)})</span>
-                </div>
-                <div className="popover-row">
-                  <span>Uncached Tokens:</span>
-                  <span>{((sqlPass.prompt_tokens || 0) - (sqlPass.prompt_tokens_details?.cached_tokens || 0)).toLocaleString()} ({formatCost(sqlPassCost.uncached)})</span>
-                </div>
-                <div className="popover-row">
-                  <span>Output Tokens:</span>
-                  <span>{(sqlPass.completion_tokens || 0).toLocaleString()} ({formatCost(sqlPassCost.output)})</span>
-                </div>
-                <div className="popover-row popover-subtotal">
-                  <span>Subtotal:</span>
-                  <span>{formatCost(sqlPassCost.total)}</span>
-                </div>
-                {/* New: Input String row */}
-                {sqlPass.input && (
-                  <div className="popover-row">
-                    <span>Input String:</span>
-                    {renderEllipsisSpan(
-                      Array.isArray(sqlPass.input)
-                        ? sqlPass.input.map(m => m.content).join(' | ')
-                        : String(sqlPass.input),
-                      'SQL Pass Input String'
-                    )}
-                  </div>
-                )}
-                {/* New: Output String row */}
-                {sqlPass.output && (
-                  <div className="popover-row">
-                    <span>Output String:</span>
-                    {renderEllipsisSpan(
-                      String(sqlPass.output),
-                      'SQL Pass Output String'
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
-          <div className="popover-section pricing-info">
-            <div className="popover-title">Pricing</div>
-            <div className="popover-item">
-              <div className="popover-row">
-                <span>Cached Input:</span>
-                <span>$0.50/1M tokens</span>
-              </div>
-              <div className="popover-row">
-                <span>Uncached Input:</span>
-                <span>$2.00/1M tokens</span>
-              </div>
-              <div className="popover-row">
-                <span>Output:</span>
-                <span>$8.00/1M tokens</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <Tooltip
+          id={tooltipId}
+          place="bottom"
+          content={tooltipContent}
+          clickable={true}
+          opacity={1}
+          style={{
+            opacity: 1,
+            backgroundColor: '#fff',
+            color: '#333',
+            border: '1px solid #e0e0e0',
+            borderRadius: '12px',
+            boxShadow: '0 8px 16px -4px rgba(0,0,0,0.15)',
+            padding: '0',
+            fontSize: '0.75rem',
+            maxWidth: '320px',
+            zIndex: 1000
+          }}
+        />
+      </>
     );
   };
 

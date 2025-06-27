@@ -318,15 +318,8 @@
 }
 
 
-/* Modern Token Usage Pill with CSS Anchor Positioning & HTML Popover */
-.token-usage-pill-container {
-  position: relative;
-  display: inline-flex;
-  margin-left: 8px;
-}
-
+/* Token Usage Pill Styles */
 .token-usage-pill {
-  anchor-name: --token-pill-anchor;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -341,8 +334,8 @@
   white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
-  position: relative;
   box-shadow: 0 1px 2px 0 rgba(0,0,0,0.03);
+  margin-left: 8px;
 }
 
 .token-usage-pill:hover,
@@ -368,48 +361,32 @@
   color: #888;
 }
 
-.token-usage-popover {
-  position-anchor: --token-pill-anchor;
-  position: fixed;
-  position-area: block-end span-inline-end;
-  margin-block-start: 8px;
+.cost-estimate {
+  font-weight: 500;
+  color: #4a90e2;
+}
+
+/* React Tooltip Content Styles */
+.token-tooltip-content {
   padding: 0;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px -4px rgba(0,0,0,0.07);
-  font-size: 0.75rem;
-  font-weight: 400;
-  z-index: 1000;
-  min-width: 240px;
   max-width: 320px;
-  max-height: 650px;
-  overflow: hidden;
-  transition: opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1);
-  backdrop-filter: blur(4px) saturate(120%);
-  -webkit-backdrop-filter: blur(4px) saturate(120%);
+  max-height: 850px;
+  background: white;
+  /* overflow-y: auto; */
 }
 
-.token-usage-popover:popover-open {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.token-usage-popover:not(:popover-open) {
-  opacity: 0;
-  transform: translateY(-8px) scale(0.97);
-}
-
-.popover-section {
+.tooltip-section {
   padding: 16px;
   border-bottom: 1px solid #f1f1f1;
 }
 
-.popover-section:last-child {
+.tooltip-section:last-child {
   border-bottom: none;
 }
-
-.popover-title {
+.__react_component_tooltip.show {
+  opacity: 1 !important;
+}
+.tooltip-title {
   font-weight: 600;
   color: #333;
   margin-bottom: 8px;
@@ -421,22 +398,13 @@
   gap: 6px;
 }
 
-.popover-title::before {
-  /* content: '';
-  width: 8px;
-  height: 8px;
-  background: #cfd8dc;
-  border-radius: 50%;
-  flex-shrink: 0; */
-}
-
-.popover-item {
+.tooltip-item {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.popover-row {
+.tooltip-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -447,11 +415,12 @@
   transition: background-color 0.15s ease;
 }
 
-.popover-row:hover {
+.tooltip-row:hover {
   background-color: #f4f4f4;
 }
 
-.popover-row.popover-total {
+.tooltip-row.tooltip-total,
+.tooltip-row.tooltip-subtotal {
   font-weight: 600;
   color: #111;
   border-top: 1px solid #e0e0e0;
@@ -459,78 +428,52 @@
   padding-top: 8px;
 }
 
-.popover-row span:first-child {
+.tooltip-row span:first-child {
   font-weight: 500;
   color: #888;
 }
 
-.popover-row span:last-child {
+.tooltip-row span:last-child {
   font-weight: 600;
   color: #111;
   text-align: right;
 }
 
-@supports not (anchor-name: --test) {
-  .token-usage-popover {
-    position-anchor: unset;
-    position-area: unset;
-    margin-block-start: unset;
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-  }
-  .token-usage-popover::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 8px solid transparent;
-    border-top-color: #fff;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.07));
-  }
-  @media (prefers-color-scheme: dark) {
-    .token-usage-popover::after {
-      border-top-color: #fff;
-    }
-  }
-  @media (max-width: 768px) {
-    .token-usage-popover {
-      left: auto;
-      right: 0;
-      transform: none;
-      bottom: calc(100% + 8px);
-    }
-    .token-usage-popover::after {
-      left: auto;
-      right: 20px;
-      transform: none;
-    }
-  }
+.cost-highlight {
+  color: #4a90e2;
+  font-weight: 700;
 }
 
-@supports (anchor-name: --test) {
-  .token-usage-popover {
-    box-shadow: 0 12px 24px -8px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.03);
-  }
+.ellipsis-span {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  color: #666;
 }
 
+.ellipsis-span:hover {
+  color: #4a90e2;
+}
+
+.pricing-info .tooltip-title {
+  color: #666;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .token-usage-popover {
-    position-area: block-start span-inline-start;
-    margin-block-end: 8px;
-    margin-block-start: 0;
-    min-width: 200px;
-    max-width: 280px;
-  }
-  .popover-section {
-    padding: 12px;
-  }
   .token-usage-pill {
     padding: 3px 10px;
     font-size: 0.65rem;
+  }
+  
+  .token-tooltip-content {
+    max-width: 280px;
+  }
+  
+  .tooltip-section {
+    padding: 12px;
   }
 }
 
@@ -540,22 +483,11 @@
     background: #fff;
     color: #000;
   }
-  .token-usage-popover {
-    border-width: 2px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .token-usage-pill,
-  .token-usage-popover {
+  .token-usage-pill {
     transition: none;
-  }
-  .token-usage-pill:hover {
-    transform: none;
-  }
-  .token-usage-popover:not(:popover-open) {
-    transform: none;
   }
 }
 
